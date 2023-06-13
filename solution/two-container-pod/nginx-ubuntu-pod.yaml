@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-ubuntu-pod
+spec:
+  volumes:
+    - name: shared-volume
+      emptyDir: {}
+  containers:
+    - name: nginx-container
+      image: nginx:latest
+      volumeMounts:
+        - name: shared-volume
+          mountPath: /usr/share/nginx/html
+    - name: ubuntu-container
+      image: ubuntu:latest
+      volumeMounts:
+        - name: shared-volume
+          mountPath: /data
+      command: ["/bin/bash", "-c"]
+      args:
+        - |
+          apt update && apt install -y git
+          while true; do
+            git -C /data clone https://github.com/keeprich/nginx-ubuntu-pod-webpage.git .
+            sleep 60
+          done
+
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  selector:
+    app: nginx-container
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: LoadBalancer
